@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>سامانه‌ی مکانی مراکز آموزشی</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a5276 0%, #27ae60 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .logo {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            opacity: 0.85;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        .stats-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            display: block;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 15px;
+            font-family: Tahoma, Arial, sans-serif;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.85;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #1a5276;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-admin {
+            background: #8e44ad;
+            color: white;
+        }
+
+        .btn-stats {
+            background: #d35400;
+            color: white;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">🗺️</div>
+        <h1>سامانه‌ی مکانی مراکز آموزشی</h1>
+        <p>مشاهده، جستجو و مدیریت مراکز آموزشی روی نقشه‌ی تعاملی</p>
+
+        <div class="stats-box">
+            📍 تعداد مراکز ثبت‌شده: <b>{{ total_centers }}</b>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            👤 خوش آمدید، <b>{{ user.username }}</b>
+            {% if user.user_type == 'admin' %} (مدیر){% endif %}
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'map_view' %}" class="btn btn-primary">🗺️ ورود به نقشه</a>
+            <a href="{% url 'statistics' %}" class="btn btn-stats">📊 گزارش آماری</a>
+            {% if user.user_type == 'admin' %}
+            <a href="{% url 'admin:index' %}" class="btn btn-admin">⚙️ پنل مدیریت</a>
+            {% endif %}
+            <a href="{% url 'accounts:logout' %}" class="btn btn-secondary">🚪 خروج</a>
+        </div>
+        {% else %}
+        <div class="btn-group">
+            <a href="{% url 'map_view' %}" class="btn btn-primary">🗺️ مشاهده‌ی نقشه</a>
+            <a href="{% url 'statistics' %}" class="btn btn-stats">📊 گزارش آماری</a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-secondary">🔒 ورود به سامانه</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-secondary">📝 ثبت‌نام</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

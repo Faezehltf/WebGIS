@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <title>نقشه‌ی مراکز آموزشی</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+
+        #messages-box {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .message.error {
+            background: #fdecea;
+            color: #c0392b;
+        }
+
+        .message.success {
+            background: #e9f7ef;
+            color: #1e8449;
+        }
+
+        .message.warning {
+            background: #fef9e7;
+            color: #b7950b;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        .popup-content {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .popup-content h3 {
+            margin: 0 0 8px 0;
+            color: #1a5276;
+        }
+
+        #search-box {
+            position: absolute;
+            top: 15px;
+            left: 50px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 8px;
+        }
+
+        #search-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Tahoma, Arial, sans-serif;
+            width: 220px;
+        }
+
+        #search-btn,
+        #clear-btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 4px;
+            background: #1a5276;
+            color: white;
+            cursor: pointer;
+        }
+
+        #clear-btn {
+            background: #888;
+        }
+
+        #no-results {
+            position: absolute;
+            top: 70px;
+            left: 50px;
+            z-index: 1000;
+            background: #fdecea;
+            color: #c0392b;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        #user-panel {
+            position: absolute;
+            top: 15px;
+            right: 110px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        #add-link {
+            background: #27ae60;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #logout-link {
+            position: absolute;
+            top: 50px;
+            right: -100px;
+            z-index: 1000;
+            background: #04380b;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 25px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+
+            border: none;
+            cursor: pointer;
+        }
+
+        #export-box {
+            position: absolute;
+            top: 20px;
+            right: 290px;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+        }
+
+        .export-btn {
+            background: #2980b9;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 13px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .export-btn:hover {
+            background: #1f618d;
+        }
+
+        #admin-link {
+            position: absolute;
+            top: 50px;
+            right: -15px;
+            z-index: 1500;
+            background: #134a29;
+            color: white;
+            padding: 5px 25px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #map-mode-box {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #1a5276;
+            border-radius: 4px;
+            background: white;
+            color: #1a5276;
+            cursor: pointer;
+            font-family: Tahoma, Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .mode-btn.active {
+            background: #1a5276;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+    {% if messages %}
+    <div id="messages-box">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div id="search-box">
+        <input type="text" id="search-input" placeholder="جستجوی نام مرکز یا شهر...">
+        <button id="search-btn">جستجو</button>
+        <button id="clear-btn">پاک کردن</button>
+    </div>
+    <div id="no-results">نتیجه‌ای یافت نشد</div>
+
+    <div id="user-panel">
+        {% if user.is_authenticated %}
+        <a id="add-link" href="{% url 'add_center' %}">➕ افزودن مرکز جدید</a>
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button id="logout-link" type="submit">خروج</button>
+        </form>
+        <a id="admin-link" href="{% url 'admin:index' %}">⚙️ورود ادمین</a>
+        {% else %}
+        <a id="add-link" href="{% url 'accounts:login' %}">🔒 ورود به سامانه</a>
+        {% endif %}
+    </div>
+    <div id="map-mode-box">
+        <button class="mode-btn active" id="btn-normal" onclick="setMode('normal')">🗺️ نمایش عادی</button>
+        <button class="mode-btn" id="btn-heat" onclick="setMode('heat')">🔥 Heatmap</button>
+        <button class="mode-btn" id="btn-choropleth" onclick="setMode('choropleth')">🎨 Choropleth</button>
+    </div>
+    <div id="export-box">
+        <a href="{% url 'export_geojson' %}" class="export-btn">⬇️ خروجی GeoJSON</a>
+        <a href="{% url 'export_csv' %}" class="export-btn">⬇️ خروجی CSV</a>
+        <button id="export-image-btn" class="export-btn">🖼️ خروجی تصویر</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script>
+        var map = L.map('map').setView([35.7, 51.4], 6);
+
+        L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19,
+            crossOrigin: true
+        }).addTo(map);
+
+        var typeNames = {
+            'school': 'مدرسه',
+            'exam_center': 'مرکز برگزاری آزمون',
+            'institute': 'آموزشگاه',
+            'other': 'سایر'
+        };
+
+        function popupContent(props) {
+            return `
+            <div class="popup-content">
+                <h3>${props.name}</h3>
+                <p><b>نوع:</b> ${typeNames[props.center_type] || props.center_type}</p>
+                <p><b>شهر:</b> ${props.city}</p>
+                <p><b>آدرس:</b> ${props.address || '---'}</p>
+                <p><b>تعداد دانش‌آموز:</b> ${props.student_count}</p>
+                <p><b>تلفن:</b> ${props.phone || '---'}</p>
+            </div>
+        `;
+        }
+
+        var allCentersLayer = L.geoJSON(null, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature.properties));
+            }
+        }).addTo(map);
+
+        fetch("{% url 'centers_geojson' %}")
+            .then(response => response.json())
+            .then(data => { allCentersLayer.addData(data); })
+            .catch(error => console.error('خطا در بارگذاری داده‌ها:', error));
+
+
+        var searchLayer = L.geoJSON(null, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 10,
+                    fillColor: '#e74c3c',
+                    color: '#c0392b',
+                    weight: 2,
+                    fillOpacity: 0.9
+                });
+            },
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(popupContent(feature.properties));
+            }
+        }).addTo(map);
+
+        function doSearch() {
+            var query = document.getElementById('search-input').value.trim();
+            document.getElementById('no-results').style.display = 'none';
+            if (!query) return;
+
+            fetch("{% url 'search_centers' %}?q=" + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(data => {
+                    searchLayer.clearLayers();
+                    if (data.features.length === 0) {
+                        document.getElementById('no-results').style.display = 'block';
+                        return;
+                    }
+                    searchLayer.addData(data);
+                    if (data.features.length === 1) {
+                        var coords = data.features[0].geometry.coordinates;
+                        map.setView([coords[1], coords[0]], 13);
+                        searchLayer.eachLayer(function (layer) { layer.openPopup(); });
+                    } else {
+                        map.fitBounds(searchLayer.getBounds(), { padding: [50, 50] });
+                    }
+                })
+                .catch(error => console.error('خطا در جستجو:', error));
+        }
+
+        document.getElementById('search-btn').addEventListener('click', doSearch);
+        document.getElementById('search-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') doSearch();
+        });
+        document.getElementById('clear-btn').addEventListener('click', function () {
+            document.getElementById('search-input').value = '';
+            document.getElementById('no-results').style.display = 'none';
+            searchLayer.clearLayers();
+            map.setView([35.7, 51.4], 6);
+        });
+
+        document.getElementById('export-image-btn').addEventListener('click', function () {
+            var btn = this;
+            btn.innerText = '⏳ در حال آماده‌سازی...';
+            btn.disabled = true;
+
+            setTimeout(function () {
+                leafletImage(map, function (err, canvas) {
+                    btn.innerText = '🖼️ خروجی تصویر';
+                    btn.disabled = false;
+                    if (err) {
+                        alert('خطا در گرفتن تصویر از نقشه');
+                        console.error(err);
+                        return;
+                    }
+                    var link = document.createElement('a');
+                    link.download = 'map_export.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }, 1500);
+        });
+
+        var heatLayer = null;
+        var choroplethLayer = null;
+        var currentMode = 'normal';
+
+        function getColor(studentCount) {
+
+            return studentCount > 1000 ? '#800026' :
+                studentCount > 500 ? '#BD0026' :
+                    studentCount > 200 ? '#E31A1C' :
+                        studentCount > 100 ? '#FC4E2A' :
+                            studentCount > 50 ? '#FD8D3C' :
+                                studentCount > 20 ? '#FEB24C' :
+                                    studentCount > 0 ? '#FED976' :
+                                        '#FFEDA0';
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+
+
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + mode).classList.add('active');
+
+
+            if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null; }
+            if (choroplethLayer) { map.removeLayer(choroplethLayer); choroplethLayer = null; }
+
+            if (mode === 'normal') {
+
+                allCentersLayer.setStyle && allCentersLayer.setStyle({});
+                return;
+            }
+
+
+            fetch("{% url 'centers_geojson' %}")
+                .then(response => response.json())
+                .then(data => {
+                    if (mode === 'heat') {
+
+                        var heatPoints = data.features.map(function (f) {
+                            var coords = f.geometry.coordinates;
+                            var intensity = Math.min((f.properties.student_count || 1) / 100, 1);
+                            return [coords[1], coords[0], intensity];
+                        });
+
+                        heatLayer = L.heatLayer(heatPoints, {
+                            radius: 40,
+                            blur: 25,
+                            maxZoom: 17,
+                            gradient: {
+                                0.2: '#ffffb2',
+                                0.4: '#fecc5c',
+                                0.6: '#fd8d3c',
+                                0.8: '#f03b20',
+                                1.0: '#bd0026'
+                            }
+                        }).addTo(map);
+
+                    } else if (mode === 'choropleth') {
+
+                        choroplethLayer = L.geoJSON(data, {
+                            pointToLayer: function (feature, latlng) {
+                                var count = feature.properties.student_count || 0;
+                                var radius = Math.max(8, Math.min(count / 50, 30));
+                                return L.circleMarker(latlng, {
+                                    radius: radius,
+                                    fillColor: getColor(count),
+                                    color: '#333',
+                                    weight: 1,
+                                    fillOpacity: 0.8
+                                });
+                            },
+                            onEachFeature: function (feature, layer) {
+                                var props = feature.properties;
+                                layer.bindPopup(`
+                            <div class="popup-content">
+                                <h3>${props.name}</h3>
+                                <p><b>تعداد دانش‌آموز:</b> ${props.student_count}</p>
+                                <p><b>شهر:</b> ${props.city}</p>
+                            </div>
+                        `);
+                                layer.bindTooltip(props.name, { permanent: false, direction: 'top' });
+                            }
+                        }).addTo(map);
+
+                        addLegend();
+                    }
+                });
+        }
+
+        var legend = null;
+        function addLegend() {
+            if (legend) { map.removeControl(legend); }
+            legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function () {
+                var div = L.DomUtil.create('div', 'info legend');
+                div.style.cssText = 'background:white;padding:10px;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,0.3);font-family:Tahoma;font-size:12px;line-height:1.8';
+                var grades = [0, 20, 50, 100, 200, 500, 1000];
+                div.innerHTML = '<b>تعداد دانش‌آموز</b><br>';
+                for (var i = 0; i < grades.length; i++) {
+                    div.innerHTML +=
+                        '<span style="background:' + getColor(grades[i] + 1) +
+                        ';display:inline-block;width:14px;height:14px;margin-left:4px;border-radius:2px"></span>' +
+                        grades[i] + (grades[i + 1] ? '–' + grades[i + 1] : '+') + '<br>';
+                }
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        map.on('baselayerchange', function () {
+            if (legend && currentMode !== 'choropleth') {
+                map.removeControl(legend);
+                legend = null;
+            }
+        });
+
+    </script>
+
+    <script>
+        let statesLayer = null;
+
+        // لایه‌ی WMS از GeoServer برای مراکز آموزشی
+        var geoserverWMS = L.tileLayer.wms('http://localhost:8080/geoserver/mathnet/wms', {
+            layers: 'mathnet:centers_educationcenter',
+            format: 'image/png',
+            transparent: true,
+            version: '1.3.0'
+        });
+
+        fetch("{% static 'iran_states.geojson' %}")
+            .then(response => response.json())
+            .then(data => {
+                statesLayer = L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            color: '#d33',
+                            weight: 2,
+                            fillColor: '#bb0000',
+                            fillOpacity: 0.05
+                        };
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties) {
+                            var provinceName = feature.properties.name_persian || feature.properties.name || 'استان';
+                            layer.bindTooltip(provinceName, { sticky: true });
+                            layer.on('mouseover', function () {
+                                layer.setStyle({ fillOpacity: 0.25 });
+                            });
+                            layer.on('mouseout', function () {
+                                layer.setStyle({ fillOpacity: 0.05 });
+                            });
+                            layer.on('click', function () {
+                                window.location.href = "{% url 'city_report' %}?city=" + encodeURIComponent(provinceName);
+                            });
+                        }
+                    }
+                }).addTo(map);
+
+                L.control.layers(null, {
+                    'مرز استان‌ها': statesLayer,
+                    'مراکز آموزشی (WMS - GeoServer)': geoserverWMS
+                }, { collapsed: true, position: 'bottomleft' }).addTo(map);
+            })
+            .catch(error => console.error('خطا در بارگذاری مرز استان‌ها:', error));
+
+    </script>
+
+</body>
+
+</html>

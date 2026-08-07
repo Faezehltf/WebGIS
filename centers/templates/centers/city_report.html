@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش آماری شهرها</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #1a5276;
+            margin-bottom: 20px;
+        }
+
+        .nav-links {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-links a {
+            background: #1a5276;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .filter-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Tahoma;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        button {
+            padding: 8px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background: #1a5276;
+            color: white;
+            padding: 12px;
+            text-align: right;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stat-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a5276;
+        }
+
+        .stat-card .label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="{% url 'home' %}">🏠 خانه</a>
+            <a href="{% url 'map_view' %}">🗺️ نقشه</a>
+        </div>
+
+        <h1>📊 گزارش آماری مراکز آموزشی</h1>
+
+        <div class="filter-box">
+            <form method="get" style="display:flex; gap:10px; width:100%">
+                <select name="city">
+                    <option value="">-- همه‌ی شهرها --</option>
+                    {% for city in cities %}
+                    <option value="{{ city.city }}" {% if city.is_selected %}selected{% endif %}>
+                        {{ city.city }} ({{ city.total_centers }} مرکز)
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit">نمایش گزارش</button>
+            </form>
+        </div>
+
+        {% if selected_city and city_centers %}
+        <h2>مراکز شهر {{ selected_city }}</h2>
+        <div class="stat-cards">
+            <div class="stat-card">
+                <div class="number">{{ city_centers.count }}</div>
+                <div class="label">تعداد مراکز</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">
+                    {% with city_centers|length as count %}
+                    {% for c in cities %}{% if c.city == selected_city %}{{ c.total_students }}{% endif %}{% endfor %}
+                    {% endwith %}
+                </div>
+                <div class="label">مجموع دانش‌آموزان</div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>نام مرکز</th>
+                    <th>نوع</th>
+                    <th>تعداد دانش‌آموز</th>
+                    <th>آدرس</th>
+                    <th>تلفن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for center in city_centers %}
+                <tr>
+                    <td>{{ center.name }}</td>
+                    <td>{{ center.get_center_type_display }}</td>
+                    <td>{{ center.student_count }}</td>
+                    <td>{{ center.address|default:"---" }}</td>
+                    <td>{{ center.phone|default:"---" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <h2>آمار کلی بر اساس شهر</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>شهر</th>
+                    <th>تعداد مراکز</th>
+                    <th>مجموع دانش‌آموزان</th>
+                    <th>میانگین دانش‌آموز</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for city in cities %}
+                <tr>
+                    <td><a href="?city={{ city.city }}">{{ city.city }}</a></td>
+                    <td>{{ city.total_centers }}</td>
+                    <td>{{ city.total_students|default:0 }}</td>
+                    <td>{{ city.avg_students|floatformat:0|default:0 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

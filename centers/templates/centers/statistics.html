@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>گزارش آماری مراکز</title>
+    <style>
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #1a5276;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            flex: 1;
+        }
+
+        .card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a5276;
+        }
+
+        .card .label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        th {
+            background: #1a5276;
+            color: white;
+            padding: 12px;
+            text-align: right;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: #f8f9fa;
+        }
+
+        .bar {
+            background: #1a5276;
+            height: 10px;
+            border-radius: 5px;
+            min-width: 4px;
+        }
+
+        .btn-group {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 14px;
+            color: white;
+        }
+
+        .btn-map {
+            background: #27ae60;
+        }
+
+        .btn-home {
+            background: #2c3e50;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📊 گزارش آماری مراکز آموزشی</h1>
+
+        <div class="btn-group">
+            <a href="{% url 'home' %}" class="btn btn-home">🏠 خانه</a>
+            <a href="{% url 'map_view' %}" class="btn btn-map">🗺️ بازگشت به نقشه</a>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="number">{{ total_centers }}</div>
+                <div class="label">کل مراکز آموزشی</div>
+            </div>
+            <div class="card">
+                <div class="number">{{ total_students }}</div>
+                <div class="label">کل دانش‌آموزان</div>
+            </div>
+            <div class="card">
+                <div class="number">{{ stats|length }}</div>
+                <div class="label">تعداد شهرها</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>شهر</th>
+                    <th>تعداد مراکز</th>
+                    <th>کل دانش‌آموزان</th>
+                    <th>میانگین دانش‌آموز</th>
+                    <th>نمودار</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td><b>{{ stat.city }}</b></td>
+                    <td>{{ stat.count }}</td>
+                    <td>{{ stat.total_students|default:0 }}</td>
+                    <td>{{ stat.avg_students|floatformat:0|default:0 }}</td>
+                    <td>
+                        <div class="bar" style="width:50px"></div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#888;padding:20px">
+                        هنوز داده‌ای ثبت نشده
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

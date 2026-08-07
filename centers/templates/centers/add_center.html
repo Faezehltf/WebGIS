@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>افزودن مرکز آموزشی جدید</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+
+        #map {
+            flex: 2;
+            height: 100vh;
+        }
+
+        #form-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-left: 1px solid #ddd;
+        }
+
+        .form-input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #submit-btn {
+            background: #1a5276;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+        }
+
+        #submit-btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        #coord-display {
+            background: #eef;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .hint {
+            color: #c0392b;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <div id="form-panel">
+        <h2>افزودن مرکز جدید</h2>
+        <p class="hint">📍 ابتدا روی نقشه کلیک کنید تا موقعیت مرکز مشخص شود</p>
+        <div id="coord-display">موقعیت انتخاب نشده</div>
+
+        <form method="post" id="center-form">
+            {% csrf_token %}
+            <label>{{ form.name.label }}</label>
+            {{ form.name }}
+
+            <label>{{ form.center_type.label }}</label>
+            {{ form.center_type }}
+
+            <label>{{ form.address.label }}</label>
+            {{ form.address }}
+
+            <label>{{ form.city.label }}</label>
+            {{ form.city }}
+
+            <label>{{ form.student_count.label }}</label>
+            {{ form.student_count }}
+
+            <label>{{ form.phone.label }}</label>
+            {{ form.phone }}
+
+            {{ form.latitude }}
+            {{ form.longitude }}
+
+            <button type="submit" id="submit-btn" disabled>ثبت مرکز</button>
+            <a href="{% url 'map_view' %}"
+                style="display:block; text-align:center; margin-top:10px; color:#1a5276; text-decoration:none; font-size:14px;">🗺️
+                بازگشت به نقشه</a>
+            <a href="{% url 'home' %}"
+                style="display:block; text-align:center; margin-top:5px; color:#888; text-decoration:none; font-size:13px;">🏠
+                صفحه‌ی اصلی</a>
+        </form>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([35.7, 51.4], 6);
+
+        L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            subdomains: 'abcd',
+            maxZoom: 19
+        }).addTo(map);
+
+        var marker = null;
+
+        map.on('click', function (e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker([lat, lng]).addTo(map);
+
+            document.getElementById('id_latitude').value = lat;
+            document.getElementById('id_longitude').value = lng;
+            document.getElementById('coord-display').innerText =
+                'موقعیت انتخاب‌شده: ' + lat.toFixed(5) + ', ' + lng.toFixed(5);
+
+            document.getElementById('submit-btn').disabled = false;
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت‌نام</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Tahoma, Arial, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .register-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            width: 340px;
+        }
+
+        h2 {
+            color: #1a5276;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1e8449;
+        }
+
+        .errorlist {
+            color: #c0392b;
+            font-size: 13px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .link-row {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .link-row a {
+            color: #1a5276;
+            text-decoration: none;
+        }
+
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 10px;
+        }
+
+        .messages li {
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .messages .error {
+            background: #fdecea;
+            color: #c0392b;
+        }
+
+        .messages .success {
+            background: #e9f7ef;
+            color: #1e8449;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="register-box">
+        <h2>ثبت‌نام در سامانه</h2>
+
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            <label>نام کاربری</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+
+            <label>ایمیل</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+
+            <label>رمز عبور</label>
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+
+            <label>تکرار رمز عبور</label>
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+
+            <button type="submit">ثبت‌نام</button>
+            <div class="link-row">
+                <a href="{% url 'home' %}">🏠 صفحه‌ی اصلی</a>
+            </div>
+        </form>
+        <div class="link-row">
+            حساب دارید؟ <a href="{% url 'accounts:login' %}">وارد شوید</a>
+        </div>
+    </div>
+</body>
+
+</html>
